@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 
-	"go.uber.org/zap"
 	"gopkg.in/yaml.v2"
 
+	"github.com/YxTiBlya/ci-core/logger"
 	"github.com/YxTiBlya/ci-core/scheduler"
 
 	"github.com/YxTiBlya/ci-executor/internal/service"
@@ -23,28 +24,25 @@ type Config struct {
 var cfgPath string
 
 func init() {
+	logger.Init(logger.DevelopmentConfig)
 	flag.StringVar(&cfgPath, "cfg", "config.yaml", "app cfg path")
 	flag.Parse()
 }
 func main() {
-	logger := zap.Must(zap.NewDevelopment()).Sugar()
-
 	yamlFile, err := os.ReadFile(cfgPath)
 	if err != nil {
-		logger.Fatal("failed to open config file", zap.Error(err))
+		log.Fatal("failed to open config file", err)
 	}
 
 	var cfg Config
 	if err := yaml.Unmarshal(yamlFile, &cfg); err != nil {
-		logger.Fatal("failed to unmarshal config file", zap.Error(err))
+		log.Fatal("failed to unmarshal config file", err)
 	}
 
-	svc := service.New(cfg.Executor.Service, logger, service.Relations{})
-
+	svc := service.New(cfg.Executor.Service)
 	grpc := grpc.New(cfg.Executor.GRPC, svc)
 
 	sch := scheduler.NewScheduler(
-		zap.Must(zap.NewDevelopment()).Sugar(),
 		scheduler.NewComponent("service", svc),
 		scheduler.NewComponent("grpc", grpc),
 	)

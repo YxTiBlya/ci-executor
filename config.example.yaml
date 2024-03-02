@@ -1,4 +1,4 @@
 executor:
   grpc:
-    address: "localhost:8000"
+    address: "localhost:9091"
     start_timeout: 2s
