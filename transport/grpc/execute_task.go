@@ -3,9 +3,6 @@ package grpc
 import (
 	"context"
 
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-
 	"github.com/YxTiBlya/ci-api/pkg/executor"
 
 	"github.com/YxTiBlya/ci-executor/internal/service/dto"
@@ -13,8 +10,8 @@ import (
 
 func (s *Server) ExecuteTask(ctx context.Context, in *executor.ExecuteRequest) (*executor.ExecuteResponse, error) {
 	if err := in.Validate(); err != nil {
-		s.log.Error("failed to validate request", zap.Error(err))
-		return nil, errors.Wrap(err, "failed to validate request")
+		s.log.Error().Err(err).Msg("failed to validate request")
+		return nil, err
 	}
 
 	result := s.svc.ExecuteTask(ctx, dto.ExecuteTaskRequest{

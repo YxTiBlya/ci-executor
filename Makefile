@@ -1,5 +1,8 @@
-build-executor:
-	@cd ./executor && go build -o ../bin/executor ./cmd/main/main.go
+build:
+	@go build -o ./bin/executor ./cmd/main/main.go
 
-run-executor: build-executor
+run: build
 	@./bin/executor --cfg config.yaml
+
+docker-build:
+	@docker build -t ci-executor .

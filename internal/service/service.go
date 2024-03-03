@@ -3,31 +3,26 @@ package service
 import (
 	"context"
 
-	"go.uber.org/zap"
+	"github.com/YxTiBlya/ci-core/logger"
 )
 
-type Relations struct {
-}
-
-func New(cfg Config, log *zap.SugaredLogger, rel Relations) *Service {
+func New(cfg Config) *Service {
 	return &Service{
-		cfg:       cfg,
-		log:       log,
-		Relations: rel,
+		cfg: cfg,
+		log: logger.New("service"),
 	}
 }
 
 type Service struct {
 	cfg Config
-	log *zap.SugaredLogger
-	Relations
+	log *logger.Logger
 }
 
 func (svc *Service) Start(ctx context.Context) error {
-
 	return nil
 }
 
 func (svc *Service) Stop(ctx context.Context) error {
+	svc.log.Sync()
 	return nil
 }

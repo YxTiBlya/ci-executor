@@ -18,9 +18,17 @@ func (svc *Service) ExecuteTask(ctx context.Context, req dto.ExecuteTaskRequest)
 	start := time.Now()
 	b, err := cmd.Output()
 	if err != nil {
-		exitCode := err.(*exec.ExitError)
-		svc.log.Errorf("failed to execute command: %s\noutput: %s\nexit status: %d", req.Command, b, exitCode.ExitCode())
-		return dto.NewExecuteTaskResponse(dto.ExecuteFailedStatus, exitCode.ExitCode(), &b, &start)
+		if exitCode, ok := err.(*exec.ExitError); ok {
+			svc.log.Error().
+				Str("command", req.Command).
+				Str("output", string(b)).
+				Int("exitCode", exitCode.ExitCode()).
+				Msg("failed to execute command")
+			return dto.NewExecuteTaskResponse(dto.ExecuteFailedStatus, exitCode.ExitCode(), &b, &start)
+		}
+
+		svc.log.Error().Err(err).Msg("failed to execute command")
+		return dto.NewExecuteTaskResponse(dto.ExecuteFailedStatus, 1, &b, &start)
 	}
 
 	return dto.NewExecuteTaskResponse(dto.ExecuteSuccessStatus, 0, &b, &start)

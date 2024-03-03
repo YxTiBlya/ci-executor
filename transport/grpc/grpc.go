@@ -6,24 +6,25 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/YxTiBlya/ci-api/pkg/executor"
+	"github.com/YxTiBlya/ci-core/logger"
 )
 
 func New(cfg Config, svc Service) *Server {
 	s := &Server{
 		svc: svc,
 		cfg: cfg,
-		log: zap.Must(zap.NewDevelopment()).Sugar(),
+		log: logger.New("grpc"),
 	}
 
 	opts := []grpc.ServerOption{
 		grpc.ChainUnaryInterceptor(
 			func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 				if r, ok := req.(*executor.ExecuteRequest); ok {
-					s.log.Infof("grpc request %s repository: %s", info.FullMethod, r.Repo)
+					s.log.Info().Str("method", info.FullMethod).Str("repo", r.Repo).Msg("grpc request")
 				}
 
 				return handler(ctx, req)
@@ -33,6 +34,8 @@ func New(cfg Config, svc Service) *Server {
 	s.srv = grpc.NewServer(opts...)
 
 	executor.RegisterExecutorAPIServer(s.srv, s)
+	reflection.Register(s.srv)
+
 	return s
 }
 
@@ -41,7 +44,7 @@ type Server struct {
 	svc Service
 	srv *grpc.Server
 	cfg Config
-	log *zap.SugaredLogger
+	log *logger.Logger
 }
 
 func (s *Server) Start(ctx context.Context) error {
@@ -52,7 +55,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	errCh := make(chan error)
 	go func() {
-		s.log.Infof("grpc start listening on %q", s.cfg.Address)
+		s.log.Info().Str("address", s.cfg.Address).Msg("starting grpc server")
 		if err := s.srv.Serve(conn); err != nil {
 			errCh <- errors.Wrap(err, "cannot server connection")
 		}

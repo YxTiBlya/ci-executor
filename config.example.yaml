@@ -1,0 +1,4 @@
+executor:
+  grpc:
+    address: "localhost:9091"
+    start_timeout: 2s
